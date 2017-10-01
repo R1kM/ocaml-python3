@@ -64,6 +64,7 @@
         | m :: st when m > n -> stack := st; DEDENT :: unindent n
         | _ -> raise (LexingError "incorrect indentation")
 
+  let open_pars = ref 0
 }
 
 let space = ' ' | '\t' 
@@ -124,6 +125,7 @@ rule token = parse
                                 }
     | '\n'                      { newline lexbuf;
                                     let n = indentation lexbuf in
+                                    if !open_pars > 0 then token lexbuf else
                                     match !stack with
                                         | m :: _ when m < n ->
                                             stack := n :: !stack;
@@ -157,8 +159,8 @@ rule token = parse
     | ',' space* ']'            { [COMMARSQ] }
     | ',' space* ')'            { [COMMARPAR] }
     | ',' space* '}'            { [COMMARBRA] }
-    | "("                       { [LPAR] }
-    | ")"                       { [RPAR] }
+    | "("                       { incr open_pars; [LPAR] }
+    | ")"                       { decr open_pars; [RPAR] }
     | "["                       { [LSQ] }
     | "]"                       { [RSQ] }
     | "{"                       { [LBRACE] }
